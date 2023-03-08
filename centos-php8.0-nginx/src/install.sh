@@ -3,6 +3,7 @@ set -e
 OS=""
 OS_VER=""
 OS_USER=$USER
+CURRENT_FOLDER=$PWD
 if $OS_USER; then
   OS_USER='nginx'
 fi
@@ -23,15 +24,6 @@ if cat /etc/*release | grep CentOS >/dev/null 2>&1; then
   elif [ $(rpm --eval '%{centos_ver}') == '8' ]; then
     OS_VER="CentOS8"
   fi
-#elif cat /etc/*release | grep ^NAME | grep Ubuntu > /dev/null 2>&1; then
-#    OS="Ubuntu"
-#    if [ $(lsb_release -c | grep Codename | awk '{print $2}') == 'trusty' ] ;then
-#        OS_VER="Ubuntu14"
-#    elif [ $(lsb_release -c | grep Codename | awk '{print $2}') == 'xenial' ] ;then
-#        OS_VER="Ubuntu16"
-#    elif [ $(lsb_release -c | grep Codename | awk '{print $2}') == 'bionic' ] ;then
-#        OS_VER="Ubuntu18"
-#    fi
 elif cat /etc/*release | grep ^NAME | grep 'Amazon Linux AMI' >/dev/null 2>&1; then
   OS="Amazon Linux AMI"
   OS_VER="CentOS7"
@@ -46,6 +38,7 @@ fi
 echo ">> OS : $OS"
 echo ">> OS Version : $OS_VER"
 echo ">> OS User : $OS_USER"
+echo ">> FOLDER INSTALL : $CURRENT_FOLDER"
 
 function setPermission() {
   echo '>> Add your user (in this case, $OS_USER) to the apache group.'
@@ -129,7 +122,7 @@ function setupProject() {
   echo "<?php phpinfo();?>" >>/var/www/$PROJECT/public/index.php
 
 #  wget https://raw.githubusercontent.com/ice-s/script/master/nginx.conf
-  yes | cp -rf   ./nginx.conf /etc/nginx/nginx.conf
+  yes | cp -rf $CURRENT_FOLDER/nginx.conf /etc/nginx/nginx.conf
 }
 
 function installLib() {
@@ -143,7 +136,7 @@ function installLib() {
 #    rm -f /etc/profile.d/greeting-console.sh
 #    touch /etc/profile.d/greeting-console.sh
     #wget https://raw.githubusercontent.com/ice-s/script/master/greeting.sh
-    yes | cp -rf  ./greeting.sh /etc/profile.d/greeting-console.sh
+    yes | cp -rf  $CURRENT_FOLDER/greeting.sh /etc/profile.d/greeting-console.sh
     chmod +x /etc/profile.d/greeting-console.sh
   else
     exit 1
@@ -210,17 +203,7 @@ function resetService() {
 }
 
 if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]] ; then
-  while true; do
-    read -p "Register Package? Y or N: " yn
-    case $yn in
-    [Yy]*)
-      registerPackage
-      break
-      ;;
-    [Nn]*) break ;;
-    *) echo "Please answer yes or no." ;;
-    esac
-  done
+  registerPackage
 
   while true; do
     read -p "Install Library (PHP - NGINX ...)? Y or N: " yn
