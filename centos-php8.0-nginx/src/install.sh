@@ -154,8 +154,8 @@ function installLib() {
     #install php8 longtime
     yum install -y yum-utils
     yum-config-manager --enable remi-php80
-    yum install -y php php-cli
-    yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis
+    yum install -y php php-cli --skip-broken
+    yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
 
     #/etc/php-fpm.d/www.conf
     #
