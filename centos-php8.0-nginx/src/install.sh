@@ -121,28 +121,28 @@ function setupProject() {
   touch /var/www/$PROJECT/public/index.php
   echo "<?php phpinfo();?>" >>/var/www/$PROJECT/public/index.php
 
-#  wget https://raw.githubusercontent.com/ice-s/script/master/nginx.conf
+  #  wget https://raw.githubusercontent.com/ice-s/script/master/nginx.conf
   yes | cp -rf $CURRENT_FOLDER/nginx.conf /etc/nginx/nginx.conf
 }
 
 function installLib() {
-  if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]] ; then
+  if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]]; then
     yum update -y
     yum install git -y
     yum install figlet -y
     yum install htop -y
     yum install wget -y
     cd /etc/profile.d
-#    rm -f /etc/profile.d/greeting-console.sh
-#    touch /etc/profile.d/greeting-console.sh
+    #    rm -f /etc/profile.d/greeting-console.sh
+    #    touch /etc/profile.d/greeting-console.sh
     #wget https://raw.githubusercontent.com/ice-s/script/master/greeting.sh
-    yes | cp -rf  $CURRENT_FOLDER/greeting.sh /etc/profile.d/greeting-console.sh
+    yes | cp -rf $CURRENT_FOLDER/greeting.sh /etc/profile.d/greeting-console.sh
     chmod +x /etc/profile.d/greeting-console.sh
   else
     exit 1
   fi
 
-  if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]] ; then
+  if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]]; then
     echo '>> Installing Nginx'
     yum install -y nginx
 
@@ -194,15 +194,15 @@ function resetService() {
   systemctl restart nginx
   echo "Enable PHP-FPM"
   systemctl enable php-fpm
-    echo "Restart PHP-FPM"
+  echo "Restart PHP-FPM"
   systemctl restart php-fpm
   echo "Enable redis service"
   systemctl enable redis.service
-   echo "Restart redis service"
+  echo "Restart redis service"
   systemctl restart redis.service
 }
 
-if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]] ; then
+if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]]; then
   registerPackage
 
   while true; do

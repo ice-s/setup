@@ -7,6 +7,7 @@ services:
       context: ./docker
       dockerfile: Dockerfile-AmazonLinux2
     tty: true
+    privileged: true
     container_name: amazonlinux-test
     volumes:
       - ./src:/install
