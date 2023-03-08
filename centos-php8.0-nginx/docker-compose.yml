@@ -1,0 +1,25 @@
+version: "3"
+
+services:
+  amazonlinux:
+    platform: linux/amd64
+    build:
+      context: ./docker
+      dockerfile: Dockerfile-AmazonLinux2
+    tty: true
+    container_name: amazonlinux-test
+    volumes:
+      - ./src:/install
+    ports:
+      - 8855:80
+  centos7:
+    platform: linux/amd64
+    build:
+      context: ./docker
+      dockerfile: Dockerfile-Centos7
+    tty: true
+    container_name: centos7-test
+    volumes:
+      - ./src:/install
+    ports:
+      - 8866:80

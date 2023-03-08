@@ -1,0 +1,6 @@
+FROM centos:centos7.9.2009
+
+RUN yum install wget -y
+RUN yum -y update
+COPY systemctl.py /usr/bin/systemctl
+RUN chmod a+x /usr/bin/systemctl
