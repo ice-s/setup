@@ -187,72 +187,68 @@ function installLib() {
 
 }
 
+function installMySQLServer() {
+  echo "Install MySQL Server"
+
+   if !  rpm -qa | grep mysql80-community; then
+     curl -sSLO https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm
+      rpm -ivh mysql80-community-release-el7-5.noarch.rpm
+   fi
+
+  yum install mysql-server -y
+  grep 'temporary password' /var/log/mysqld.log
+  mysql_secure_installation
+}
+
 function resetService() {
   echo "Enable Nginx"
   systemctl enable nginx
   echo "Restart Nginx"
   systemctl restart nginx
+
   echo "Enable PHP-FPM"
   systemctl enable php-fpm
   echo "Restart PHP-FPM"
   systemctl restart php-fpm
+
   echo "Enable redis service"
   systemctl enable redis.service
   echo "Restart redis service"
   systemctl restart redis.service
+
+  echo "Enable MySQL service"
+  systemctl enable mysqld
+  echo "Restart MySQL service"
+  systemctl restart mysqld
+}
+
+function installAll() {
+    installLib
+    installMySQLServer
+    setupProject
+    createSwap
+    setPermission
 }
 
 if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]]; then
   registerPackage
-
-  while true; do
-    read -p "Install Library (PHP - NGINX ...)? Y or N: " yn
-    case $yn in
-    [Yy]*)
-      installLib
-      break
-      ;;
-    [Nn]*) break ;;
-    *) echo "Please answer yes or no." ;;
-    esac
-  done
-
-  while true; do
-    read -p "Setup project (create a project with index.php )? Y or N: " yn
-    case $yn in
-    [Yy]*)
-      setupProject
-      break
-      ;;
-    [Nn]*) break ;;
-    *) echo "Please answer yes or no." ;;
-    esac
-  done
-
-  while true; do
-    read -p "Create Swap? Y or N: " yn
-    case $yn in
-    [Yy]*)
-      createSwap
-      break
-      ;;
-    [Nn]*) break ;;
-    *) echo "Please answer yes or no." ;;
-    esac
-  done
-
-  while true; do
-    read -p "Setup permission /var/www? Y or N: " yn
-    case $yn in
-    [Yy]*)
-      setPermission
-      break
-      ;;
-    [Nn]*) break ;;
-    *) echo "Please answer yes or no." ;;
-    esac
-  done
-  resetService
 fi
 
-echo "CONGRATULATION!!!"
+PS3="Select item you want to run: "
+
+items=("Install Lib" "Install MySQL Server" "Setup Project" "Create Swap" "Setup Permission" "Install All" "Restart Services")
+
+select item in "${items[@]}" Quit
+do
+    case $REPLY in
+        1) installLib;;
+        2) installMySQLServer;;
+        3) setupProject;;
+        4) createSwap;;
+        5) setPermission;;
+        6) installAll;;
+        7) resetService;;
+        $((${#items[@]}+1))) echo "We're done!"; break;;
+        *) echo "Ooops - unknown choice $REPLY";;
+    esac
+done

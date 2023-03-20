@@ -19,3 +19,5 @@ docker exec -it  -u root centos7-test bash
 #chmod +x install
 #./install.sh
 ```
+
+![Tux, the Linux mascot](./menu.png)
