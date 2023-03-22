@@ -35,14 +35,7 @@ else
   exit 1
 fi
 
-echo ">> OS : $OS"
-echo ">> OS Version : $OS_VER"
-echo ">> OS User : $OS_USER"
-echo ">> FOLDER INSTALL : $CURRENT_FOLDER"
-
 . $CURRENT_FOLDER/setup.config
-#echo "$var1" "$var2"
-
 ColorGreen() {
   echo -ne $Green$1$clear
 }
@@ -52,13 +45,18 @@ ColorBlue() {
 ColorDefault() {
   echo -ne $Color_Off$1$clear
 }
+ColorDefault
+
+echo ">> OS : $OS"
+echo ">> OS Version : $OS_VER"
+echo ">> OS User : $OS_USER"
+echo ">> FOLDER INSTALL : $CURRENT_FOLDER"
 
 function setPermission() {
   echo '>> Add your user (in this case, $OS_USER) to the apache group.'
   usermod -a -G nginx $OS_USER
   #echo '>> Change the group ownership of /var/www and its contents to the apache group.'
   chown -R $OS_USER:nginx /var/www
-
 }
 
 function createSwap() {
@@ -260,36 +258,40 @@ fi
 
 PS3="Select item you want to run: "
 
-items=("Install Lib" "Install Nginx PHP" "Install MySQL Server" "Setup Project" "Create Swap" "Setup Permission" "Install All" "Restart Services")
+items=("Install Library (git, figlet, htop, wget, welcome)" "Install Nginx PHP Redis Composer NodeJS PM2" "Install MySQL Server" "Setup a Sample Project" "Create Swap" "Setup Permission (/var/www)" "Install All" "Restart Services")
 
 
 showMenu(){
  echo -ne "$(ColorGreen '') ========================== MENU ==========================\n"
   for i in "${!items[@]}";
   do
-     printf "%s\t%s\n" "$(($i + 1))" "${items[$i]}"
+     printf "%s) %s\n" "$(($i + 1))" "${items[$i]}"
   done
-  printf "%s\t%s\n" "0" "Exit"
+  printf "%s) %s\n" "0" "Exit"
   echo -ne "$(ColorGreen '') ========================== MENU ==========================\n"
+}
+
+handleAction(){
+  echo -ne "$(ColorBlue 'Choose an option:') "
+  read a
+      case $a in
+        1) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installLib ;menu;;
+        2) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installWebServer ;menu;;
+        3) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installMySQLServer ;menu;;
+        4) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;setupProject ;menu;;
+        5) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;createSwap ;menu;;
+        6) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;setPermission ;menu;;
+        7) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installAll ;menu;;
+        8) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;resetService ;menu;;
+    		0) ColorBlue;echo -ne "Bye!\n";ColorDefault;exit 0 ;;
+    		*) echo -e $Red"Wrong option.\n"; handleAction;;
+      esac
 }
 
 menu() {
   ColorDefault
   showMenu
-  echo -ne "$(ColorBlue 'Choose an option:') "
-   read a
-    case $a in
-      1) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installLib ;menu;;
-      2) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installWebServer ;menu;;
-      3) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installMySQLServer ;menu;;
-      4) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;setupProject ;menu;;
-      5) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;createSwap ;menu;;
-      6) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;setPermission ;menu;;
-      7) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installAll ;menu;;
-      8) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;resetService ;menu;;
-  		0) clear;showMenu;ColorDefault;exit 0 ;;
-  		*) clear;showMenu;ColorDefault;echo -e $Red"Wrong option.\n"; menu;;
-    esac
+  handleAction
   ColorDefault
 }
 
