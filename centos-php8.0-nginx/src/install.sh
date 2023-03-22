@@ -40,6 +40,19 @@ echo ">> OS Version : $OS_VER"
 echo ">> OS User : $OS_USER"
 echo ">> FOLDER INSTALL : $CURRENT_FOLDER"
 
+. $CURRENT_FOLDER/setup.config
+#echo "$var1" "$var2"
+
+ColorGreen() {
+  echo -ne $Green$1$clear
+}
+ColorBlue() {
+  echo -ne $Blue$1$clear
+}
+ColorDefault() {
+  echo -ne $Color_Off$1$clear
+}
+
 function setPermission() {
   echo '>> Add your user (in this case, $OS_USER) to the apache group.'
   usermod -a -G nginx $OS_USER
@@ -70,10 +83,10 @@ inputProject() {
 }
 
 function registerPackage() {
-  if ! rpm -qa | grep epel-release; then
+  if ! rpm -qa | grep epel-release &>/dev/null; then
     rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
   fi
-  if ! rpm -qa | grep remi-release-7; then
+  if ! rpm -qa | grep remi-release-7 &>/dev/null; then
     rpm -Uvh https://rpms.remirepo.net/enterprise/remi-release-7.rpm
   fi
 }
@@ -92,7 +105,7 @@ function setupProject() {
   rm $NGINX_CONFIG_FILE -f
   touch $NGINX_CONFIG_FILE
   chmod +w $NGINX_CONFIG_FILE
-
+  echo 'server_tokens off;' >>$NGINX_CONFIG_FILE
   echo 'server {' >>$NGINX_CONFIG_FILE
   echo '  listen 80;' >>$NGINX_CONFIG_FILE
   echo '  index index.php index.html;' >>$NGINX_CONFIG_FILE
@@ -141,6 +154,9 @@ function installLib() {
   else
     exit 1
   fi
+}
+
+function installWebServer() {
 
   if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]]; then
     echo '>> Installing Nginx'
@@ -157,6 +173,7 @@ function installLib() {
     yum install -y php php-cli --skip-broken
     yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
 
+    yes | cp -rf $CURRENT_FOLDER/local.ini /etc/php.d/local.ini
     #/etc/php-fpm.d/www.conf
     #
     #listen.owner = $OS_USER
@@ -180,9 +197,7 @@ function installLib() {
       rpm -Uvh https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.1-1nodesource.x86_64.rpm
     fi
     npm install pm2 -g
-
     yum install redis -y
-
   fi
 
 }
@@ -190,10 +205,10 @@ function installLib() {
 function installMySQLServer() {
   echo "Install MySQL Server"
 
-   if !  rpm -qa | grep mysql80-community; then
-     curl -sSLO https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm
-      rpm -ivh mysql80-community-release-el7-5.noarch.rpm
-   fi
+  if ! rpm -qa | grep mysql80-community; then
+    curl -sSLO https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm
+    rpm -ivh mysql80-community-release-el7-5.noarch.rpm
+  fi
 
   yum install mysql-server -y
   grep 'temporary password' /var/log/mysqld.log
@@ -201,33 +216,42 @@ function installMySQLServer() {
 }
 
 function resetService() {
-  echo "Enable Nginx"
-  systemctl enable nginx
-  echo "Restart Nginx"
-  systemctl restart nginx
+  if systemctl list-units | grep nginx &>/dev/null; then
+    echo "Enable Nginx"
+    systemctl enable nginx
+    echo "Restart Nginx"
+    systemctl restart nginx
+  fi
 
-  echo "Enable PHP-FPM"
-  systemctl enable php-fpm
-  echo "Restart PHP-FPM"
-  systemctl restart php-fpm
+  if systemctl list-units | grep php-fpm &>/dev/null; then
+    echo "Enable PHP-FPM"
+    systemctl enable php-fpm
+    echo "Restart PHP-FPM"
+    systemctl restart php-fpm
+  fi
 
-  echo "Enable redis service"
-  systemctl enable redis.service
-  echo "Restart redis service"
-  systemctl restart redis.service
+#  if systemctl list-units | grep redis.service &>/dev/null; then
+#    echo "Enable Redis"
+#    systemctl enable redis.service
+#    echo "Restart Redis"
+#    systemctl restart redis.service
+#  fi
 
-  echo "Enable MySQL service"
-  systemctl enable mysqld
-  echo "Restart MySQL service"
-  systemctl restart mysqld
+  if systemctl list-units | grep mysqld &>/dev/null; then
+    echo "Enable MySQL service"
+    systemctl enable mysqld
+    echo "Restart MySQL service"
+    systemctl restart mysqld
+  fi
 }
 
 function installAll() {
-    installLib
-    installMySQLServer
-    setupProject
-    createSwap
-    setPermission
+  installLib
+  installWebServer
+  installMySQLServer
+  setupProject
+  createSwap
+  setPermission
 }
 
 if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]]; then
@@ -236,19 +260,37 @@ fi
 
 PS3="Select item you want to run: "
 
-items=("Install Lib" "Install MySQL Server" "Setup Project" "Create Swap" "Setup Permission" "Install All" "Restart Services")
+items=("Install Lib" "Install Nginx PHP" "Install MySQL Server" "Setup Project" "Create Swap" "Setup Permission" "Install All" "Restart Services")
 
-select item in "${items[@]}" Quit
-do
-    case $REPLY in
-        1) installLib;;
-        2) installMySQLServer;;
-        3) setupProject;;
-        4) createSwap;;
-        5) setPermission;;
-        6) installAll;;
-        7) resetService;;
-        $((${#items[@]}+1))) echo "We're done!"; break;;
-        *) echo "Ooops - unknown choice $REPLY";;
+
+showMenu(){
+ echo -ne "$(ColorGreen '') ========================== MENU ==========================\n"
+  for i in "${!items[@]}";
+  do
+     printf "%s\t%s\n" "$(($i + 1))" "${items[$i]}"
+  done
+  printf "%s\t%s\n" "0" "Exit"
+  echo -ne "$(ColorGreen '') ========================== MENU ==========================\n"
+}
+
+menu() {
+  ColorDefault
+  showMenu
+  echo -ne "$(ColorBlue 'Choose an option:') "
+   read a
+    case $a in
+      1) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installLib ;menu;;
+      2) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installWebServer ;menu;;
+      3) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installMySQLServer ;menu;;
+      4) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;setupProject ;menu;;
+      5) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;createSwap ;menu;;
+      6) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;setPermission ;menu;;
+      7) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;installAll ;menu;;
+      8) clear;showMenu;ColorBlue;echo -ne "Starting: ${items[$a - 1]}\n";ColorDefault;resetService ;menu;;
+  		0) clear;showMenu;ColorDefault;exit 0 ;;
+  		*) clear;showMenu;ColorDefault;echo -e $Red"Wrong option.\n"; menu;;
     esac
-done
+  ColorDefault
+}
+
+menu
