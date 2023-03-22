@@ -20,4 +20,5 @@ docker exec -it  -u root centos7-test bash
 #./install.sh
 ```
 
-![Tux, the Linux mascot](./menu.png)
+![Menu 1](./menu1.png)
+![Menu 2](./menu2.png)
