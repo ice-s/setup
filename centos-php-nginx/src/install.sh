@@ -149,42 +149,6 @@ function installLib() {
     #wget https://raw.githubusercontent.com/ice-s/script/master/greeting.sh
     yes | cp -rf $CURRENT_FOLDER/greeting.sh /etc/profile.d/greeting-console.sh
     chmod +x /etc/profile.d/greeting-console.sh
-  else
-    exit 1
-  fi
-}
-
-function installWebServer() {
-
-  if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]]; then
-    echo '>> Installing Nginx'
-    yum install -y nginx
-
-    echo '>> Installing PHP8.0'
-
-    #install php8 temp
-    #yum install -y --enablerepo=remi-php80 php php-cli
-
-    #install php8 longtime
-    yum install -y yum-utils
-    yum-config-manager --enable remi-php80
-    yum install -y php php-cli --skip-broken
-    yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
-
-    yes | cp -rf $CURRENT_FOLDER/local.ini /etc/php.d/local.ini
-    #/etc/php-fpm.d/www.conf
-    #
-    #listen.owner = $OS_USER
-    #listen.group = nginx
-    #listen.mode = 0660
-    #
-    sed -i "s/^user = apache$/user = $OS_USER/" /etc/php-fpm.d/www.conf
-    sed -i "s/^group = apache$/group = nginx/" /etc/php-fpm.d/www.conf
-
-    sed -i "s/^pm.max_children = 50$/pm.max_children = 14/" /etc/php-fpm.d/www.conf
-    sed -i "s/^pm.start_servers = 5$/pm.start_servers = 5/" /etc/php-fpm.d/www.conf
-    sed -i "s/^pm.min_spare_servers = 5$/pm.min_spare_servers = 5/" /etc/php-fpm.d/www.conf
-    sed -i "s/^pm.max_spare_servers = 35$/pm.max_spare_servers = 10/" /etc/php-fpm.d/www.conf
 
     cd /
     curl -sS https://getcomposer.org/installer -o composer-setup.php
@@ -196,8 +160,142 @@ function installWebServer() {
     fi
     npm install pm2 -g
     yum install redis -y
+  else
+    exit 1
   fi
+}
 
+php=("PHP 5.6" "PHP 7.3" "PHP 7.4" "PHP 8.0" "PHP 8.1", "Remove PHP")
+showPHPList(){
+  echo -ne "$(ColorDefault '') ========================== PHP ==========================\n"
+  for i in "${!php[@]}";
+  do
+    printf "%s) %s\n" "$(($i + 1))" "${php[$i]}"
+  done
+  printf "%s) %s\n" "0" "Exit"
+  echo -ne "$(ColorDefault '') ========================== PHP ==========================\n"
+}
+installPHP56(){
+  echo ">> Installing PHP 5.6"
+  yum -y remove php*
+  yum install -y yum-utils
+  yum-config-manager --enable remi-php56
+  yum-config-manager --disable remi-php73
+  yum-config-manager --disable remi-php74
+  yum-config-manager --disable remi-php80
+  yum-config-manager --disable remi-php81
+  yum install -y php php-cli --skip-broken
+  yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
+  yes | cp -rf $CURRENT_FOLDER/local.ini /etc/php.d/local.ini
+  settingPHPFPM
+  php -v
+}
+installPHP73(){
+  echo ">> Installing PHP 7.3"
+  yum -y remove php*
+  yum install -y yum-utils
+  yum-config-manager --disable remi-php56
+  yum-config-manager --enable remi-php73
+  yum-config-manager --disable remi-php74
+  yum-config-manager --disable remi-php80
+  yum-config-manager --disable remi-php81
+  yum install -y php php-cli --skip-broken
+  yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
+  yes | cp -rf $CURRENT_FOLDER/local.ini /etc/php.d/local.ini
+  settingPHPFPM
+  php -v
+}
+installPHP74(){
+  echo ">> Installing PHP 7.4"
+  yum -y remove php*
+  yum install -y yum-utils
+  yum-config-manager --disable remi-php56
+  yum-config-manager --disable remi-php73
+  yum-config-manager --enable remi-php74
+  yum-config-manager --disable remi-php80
+  yum-config-manager --disable remi-php81
+  yum install -y php php-cli --skip-broken
+  yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
+  yes | cp -rf $CURRENT_FOLDER/local.ini /etc/php.d/local.ini
+  settingPHPFPM
+  php -v
+}
+installPHP80(){
+  echo ">> Installing PHP 8.0"
+  yum -y remove php*
+  #install php8 temp
+  #yum install -y --enablerepo=remi-php80 php php-cli
+
+  #install php8 longtime
+  yum install -y yum-utils
+  yum-config-manager --disable remi-php56
+  yum-config-manager --disable remi-php73
+  yum-config-manager --disable remi-php74
+  yum-config-manager --enable remi-php80
+  yum-config-manager --disable remi-php81
+  yum install -y php php-cli --skip-broken
+  yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
+  yes | cp -rf $CURRENT_FOLDER/local.ini /etc/php.d/local.ini
+  settingPHPFPM
+  php -v
+}
+installPHP81(){
+  echo ">> Installing PHP 8.1"
+  yum -y remove php*
+  yum install -y yum-utils
+  yum-config-manager --disable remi-php56
+  yum-config-manager --disable remi-php73
+  yum-config-manager --disable remi-php74
+  yum-config-manager --disable remi-php80
+  yum-config-manager --enable remi-php81
+
+  yum install -y php php-cli --skip-broken
+  yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
+  yes | cp -rf $CURRENT_FOLDER/local.ini /etc/php.d/local.ini
+  settingPHPFPM
+  php -v
+}
+
+settingPHPFPM(){
+  #/etc/php-fpm.d/www.conf
+  #
+  #listen.owner = $OS_USER
+  #listen.group = nginx
+  #listen.mode = 0660
+  #
+  sed -i "s/^user = apache$/user = $OS_USER/" /etc/php-fpm.d/www.conf
+  sed -i "s/^group = apache$/group = nginx/" /etc/php-fpm.d/www.conf
+  sed -i "s/^pm.max_children = 50$/pm.max_children = ${max_children}/" /etc/php-fpm.d/www.conf
+  sed -i "s/^pm.start_servers = 5$/pm.start_servers = ${start_servers}/" /etc/php-fpm.d/www.conf
+  sed -i "s/^pm.min_spare_servers = 5$/pm.min_spare_servers = ${min_spare_servers}/" /etc/php-fpm.d/www.conf
+  sed -i "s/^pm.max_spare_servers = 35$/pm.max_spare_servers = ${max_spare_servers}/" /etc/php-fpm.d/www.conf
+}
+removePHP(){
+  echo "Remove PHP"
+  yum -y remove php*
+}
+choosePHPVersion(){
+  echo -ne "$(ColorDefault 'Choose an PHP version:') "
+  read a
+      case $a in
+        1) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP56 ;;
+        2) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP73 ;;
+        3) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP74 ;;
+        4) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP80 ;;
+        5) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP81 ;;
+        6) ColorDefault;echo -ne "Choose: Remove PHP and Reinstall\n";removePHP;choosePHPVersion;;
+    		0) echo -ne "Bye!\n";ColorDefault;break ;;
+    		*) echo -ne "Wrong option.\n"; choosePHPVersion;;
+      esac
+}
+
+function installWebServer() {
+  if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]]; then
+    echo '>> Installing Nginx'
+    yum install -y nginx
+    showPHPList
+    choosePHPVersion
+  fi
 }
 
 function installMySQLServer() {
@@ -256,10 +354,7 @@ if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'Ce
   registerPackage
 fi
 
-PS3="Select item you want to run: "
-
-items=("Install Library (git, figlet, htop, wget, welcome)" "Install Nginx PHP Redis Composer NodeJS PM2" "Install MySQL Server" "Setup a Sample Project" "Create Swap" "Setup Permission (/var/www)" "Install All" "Restart Services")
-
+items=("Install Library (git, figlet, htop, redis, composer, NodeJS, welcome)" "Install Nginx PHP" "Install MySQL Server" "Setup a Sample Project" "Create Swap" "Setup Permission (/var/www)" "Install All" "Restart Services")
 
 showMenu(){
  echo -ne "$(ColorGreen '') ========================== MENU ==========================\n"
