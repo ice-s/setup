@@ -82,10 +82,7 @@ inputProject() {
 
 function registerPackage() {
   if ! rpm -qa | grep epel-release &>/dev/null; then
-    rpm -Uvh https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-  fi
-  if ! rpm -qa | grep remi-release-7 &>/dev/null; then
-    rpm -Uvh https://rpms.remirepo.net/enterprise/remi-release-7.rpm
+    amazon-linux-extras install epel -y
   fi
 }
 
@@ -140,19 +137,16 @@ function installLib() {
   if [[ $OS_VER == 'CentOS6' ]] || [[ $OS_VER == 'CentOS7' ]] || [[ $OS_VER == 'CentOS8' ]]; then
     yum update -y
     yum install git -y
-    yum install figlet -y
+#    yum install figlet -y
     yum install htop -y
     yum install wget -y
     cd /etc/profile.d
-    #    rm -f /etc/profile.d/greeting-console.sh
-    #    touch /etc/profile.d/greeting-console.sh
-    #wget https://raw.githubusercontent.com/ice-s/script/master/greeting.sh
     yes | cp -rf $CURRENT_FOLDER/greeting.sh /etc/profile.d/greeting-console.sh
     chmod +x /etc/profile.d/greeting-console.sh
 
-    #rpm -Uvh https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-x.x.x-1nodesource.x86_64.rpm
+
     if ! rpm -qa | grep nodejs; then
-      rpm -Uvh https://rpm.nodesource.com/pub_16.x/el/7/x86_64/nodejs-16.13.1-1nodesource.x86_64.rpm
+       rpm -Uvh https://rpm.nodesource.com/pub_10.x/el/7/aarch64/nodejs-10.23.0-1nodesource.aarch64.rpm
     fi
     npm install pm2 -g
     yum install redis -y
@@ -172,29 +166,7 @@ showPHPList(){
   echo -ne "$(ColorDefault '') ========================== PHP ==========================\n"
 }
 installPHP56(){
-  echo ">> Installing PHP 5.6"
-  yum -y remove php*
-
-  if [[ "$OS" == "Amazon Linux 2" ]] || [[ "$OS" == "Amazon Linux AMI" ]]; then
-    if ! rpm -qa | grep webtatic &>/dev/null; then
-      rpm -Uvh https://mirror.webtatic.com/yum/el7/webtatic-release.rpm
-    fi
-    yum install -y php56w php56w-common php56w-fpm php56w-gd php56w-mysql php56w-mbstring  php56w-ldap php-redis php56w-xml php56w-intl php56w-bcmath yum-plugin-replace --skip-broken
-    #yum replace php-common --replace-with=php56w-common --skip-broken
-  else
-    yum install -y yum-utils
-    yum-config-manager --enable remi-php56
-    yum-config-manager --disable remi-php73
-    yum-config-manager --disable remi-php74
-    yum-config-manager --disable remi-php80
-    yum-config-manager --disable remi-php81
-    yum install -y php php-cli --skip-broken
-    yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
-  fi
-
-  yes | cp -rf $CURRENT_FOLDER/local.ini /etc/php.d/local.ini
-  settingPHPFPM
-  php -v
+  echo ">> Installing PHP 5.6: Not supported for the architecture"
 }
 installPHP73(){
   echo ">> Installing PHP 7.3"
@@ -262,25 +234,7 @@ installPHP80(){
   php -v
 }
 installPHP81(){
-  echo ">> Installing PHP 8.1"
-  yum -y remove php*
-  if [[ "$OS" == "Amazon Linux 2" ]] || [[ "$OS" == "Amazon Linux AMI" ]]; then
-    amazon-linux-extras install -y php8.1 --skip-broken
-    yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
-  else
-    yum install -y yum-utils
-    yum-config-manager --disable remi-php56
-    yum-config-manager --disable remi-php73
-    yum-config-manager --disable remi-php74
-    yum-config-manager --disable remi-php80
-    yum-config-manager --enable remi-php81
-
-    yum install -y php php-cli --skip-broken
-    yum install -y php-mbstring php-xml php-gd php-zip php-fpm php-redis --skip-broken
-  fi
-  yes | cp -rf $CURRENT_FOLDER/local.ini /etc/php.d/local.ini
-  settingPHPFPM
-  php -v
+   echo ">> Installing PHP 5.6: Not supported for the architecture"
 }
 
 installComposer(){
@@ -312,11 +266,11 @@ choosePHPVersion(){
   echo -ne "$(ColorDefault 'Choose an PHP version:') "
   read a
       case $a in
-        1) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP56 ;;
+        1) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP56;choosePHPVersion ;;
         2) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP73 ;;
         3) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP74 ;;
         4) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP80 ;;
-        5) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP81 ;;
+        5) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installPHP81; choosePHPVersion;;
         6) ColorDefault;echo -ne "Choose: Remove PHP and Reinstall\n";removePHP;choosePHPVersion;;
         7) ColorDefault;echo -ne "Choose: ${items[$a - 1]}\n";installComposer;choosePHPVersion ;;
     		0) echo -ne "Bye!\n";ColorDefault;break ;;
@@ -334,16 +288,7 @@ function installWebServer() {
 }
 
 function installMySQLServer() {
-  echo "Install MySQL Server"
-
-  if ! rpm -qa | grep mysql80-community; then
-    curl -sSLO https://dev.mysql.com/get/mysql80-community-release-el7-5.noarch.rpm
-    rpm -ivh mysql80-community-release-el7-5.noarch.rpm
-  fi
-
-  yum install mysql-server -y
-  grep 'temporary password' /var/log/mysqld.log
-  mysql_secure_installation
+  echo "Install MySQL Server not supported for the architecture."
 }
 
 function resetService() {

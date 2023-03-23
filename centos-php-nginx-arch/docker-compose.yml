@@ -1,0 +1,15 @@
+version: "3"
+
+services:
+  amazonlinux:
+    platform: linux/arm64/v8
+    build:
+      context: ./docker
+      dockerfile: Dockerfile-AmazonLinux2
+    tty: true
+    privileged: true
+    container_name: amazonlinux-arm-test
+    volumes:
+      - ./src:/install
+    ports:
+      - 8877:80
