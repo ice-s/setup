@@ -1,8 +1,10 @@
 #!/bin/bash
 set -e
+. $CURRENT_FOLDER/setup.config
+
 OS=""
 OS_VER=""
-OS_USER=$USER
+OS_USER=$PHPUSER
 CURRENT_FOLDER=$PWD
 if $OS_USER; then
   OS_USER='nginx'
@@ -35,7 +37,6 @@ else
   exit 1
 fi
 
-. $CURRENT_FOLDER/setup.config
 ColorGreen() {
   echo -ne $Green$1$clear
 }
