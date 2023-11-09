@@ -1,11 +1,10 @@
 #!/bin/bash
 set -e
+CURRENT_FOLDER=$PWD
 . $CURRENT_FOLDER/setup.config
-
 OS=""
 OS_VER=""
 OS_USER=$PHPUSER
-CURRENT_FOLDER=$PWD
 if $OS_USER; then
   OS_USER='nginx'
 fi
